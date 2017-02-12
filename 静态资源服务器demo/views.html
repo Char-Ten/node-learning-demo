@@ -1,0 +1,201 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8"/>
+		<title>视图</title>
+		<script src="//at.alicdn.com/t/font_cof7bv2lgom9529.js"></script>
+		<style>
+		.icon {
+	       width: 1em; height: 1em;
+	       vertical-align: -0.15em;
+	       fill: currentColor;
+	       overflow: hidden;
+	    }
+	    *{
+	    	margin:0;
+	    	padding:0;
+	    }
+	    .m-pg{
+	    	text-align: center;
+	    	font-family:"微软雅黑";
+	    }
+	    header{
+	    	position:fixed;
+	    	top:0;
+	    	width:100%;
+	    	height:50px;
+	    	line-height:50px;
+	    	margin-bottom: 10px;
+	    	background:#f5f5f5;
+	    	box-shadow: 0 0 5px #aaa;
+	    }
+	    .m-ct{
+	    	display: flex;
+			flex-wrap:wrap;
+			align-items:stretch;
+			justify-content:stretch;
+	    	padding-top:50px;
+	    }
+	    .m-cell{
+	    	flex-grow:1;
+	    	width:10%;
+	    	padding:5px;
+	    	margin:10px;
+	    	cursor:pointer;
+	    	transition:all .5s;
+	    	word-break:break-all;
+	    }
+	    .m-cell:hover{
+	    	background:rgba(102,204,255,0.5);
+	    	border-color:#66ccff;
+	    	color:#233;
+	    }
+	    .u-txt,.u-btn{
+	    	padding:5px 10px;
+	    	border:1px solid #aaa;
+	    	border-radius:5px;
+	    	outline:none;
+	    	font-size: 16px;
+	    	transition:all .5s;
+	    }
+	    .u-txt:focus{
+	    	color:#66ccff;
+	    	border-color:#66ccff;
+	    	box-shadow: 0 0 10px #66ccff;
+	    }
+	    .u-path{
+	    	display: inline-block;
+	    }
+	    .u-btn{
+	    	background:#fff;
+	    	font-size: 15px;
+	    	cursor:pointer;
+	    }
+	    .z-hv:hover{
+	    	background:rgba(102,204,255,0.5);
+	    	border-color:#66ccff;
+	    	color:#fff;
+	    	box-shadow: 0 0 10px #66ccff
+	    }
+	    .z-no{
+	    	background:#f6f6f6;
+	    	color:#aaa;
+	    	cursor:not-allowed;
+	    }
+	    a{
+	    	text-decoration: none;
+	    	color:#666;
+	    }
+
+
+		.list-move,
+		.list-enter-active, 
+		.list-leave-active {
+		  transition: all 1s;
+		}
+		.list-enter, .list-leave-active {
+		  opacity: 0;
+		  transform: translateY(30px);
+		}
+		</style>
+	</head>
+	<body>
+		<div class="m-pg" id="content">
+			<header>
+				<p class="u-path">{{sFileHref||'/'}}</p>
+				<input type="text" class="u-txt" placeholder="搜索"  v-model="sQueryText"/>
+				<input type="button" class="u-btn" :class="{'z-no':!isAllow,'z-hv':isAllow}" value="后退" @click="eGoBack"/>
+			</header>
+			<transition-group tag="div" name="list" class="m-ct">
+				<a class="m-cell" target="_blank" v-for="item in aFilterList" :href="sDirHerf+'/'+item" @click="eHref($event,item)" key="item">
+					<div class="g-hd" key="item">
+						<svg class="icon" style="font-size:100px" aria-hidden="true" key="item">
+						    <use :xlink:href="icon[sType(item)]||'#icon-documents'" key="item"></use>
+						</svg>
+					</div>
+					<p key="item">{{item}}</p>
+				</a>
+			</transition-group>
+		</div>
+		<script src="http://cdn.bootcss.com/vue/2.0.0/vue.js"></script>
+		<script src="http://cdn.bootcss.com/vue-resource/1.0.3/vue-resource.min.js"></script>
+		<script>
+			new Vue({
+				el:'#content',
+				data:{
+					aPath:[''],
+					aFileList:[],
+					icon:{
+						html:'#icon-html',
+						js:'#icon-js',
+						css:'#icon-css',
+						dir:'#icon-documents',
+						jpg:'#icon-jpg',
+						png:'#icon-png'
+					},
+					sQueryText:'',
+				},
+				computed:{
+					aFilterList:function(){
+						var dis=this;
+						return this.aFileList.filter(function(item){
+							return item.indexOf(dis.sQueryText)!==-1;
+						});
+					},
+					sDirHerf:function(){
+						return '/file'+this.sFileHref
+					},
+					sFileHref:function(){
+						return this.aPath.join('/');
+					},
+					isAllow:function(){
+						if(this.aPath.length>1){
+							return 1;
+						}
+						return 0;
+					}
+				},
+				methods:{
+					sType:function(item){
+						var type=item.split('.');
+						if(type.length>1){
+							return type[type.length-1]
+						}
+						return 'dir'
+					},
+					eHref:function(e,item){
+						var type=item.split('.');
+						e.preventDefault();
+						if(type.length===1){
+							this.aPath.push(type[0]);
+							this.$http.get(this.sDirHerf).then(function(res){
+								this.aFileList=res.body;
+							});
+						}else{
+							location.href=e.currentTarget.href;
+						}
+						this.sQueryText=''
+
+					},
+					eGoBack:function(){
+						if(this.aPath.length>1){
+							this.aPath.pop();
+							this.$http.get(this.sDirHerf).then(function(res){
+								this.aFileList=res.body;
+							})
+						}
+
+						this.sQueryText=''
+					}
+				},
+				mounted:function(){
+					this.$nextTick(function(){
+						this.$http.get(this.sDirHerf).then(function(res){
+							this.aFileList=res.body;
+						})
+					});
+				}
+			})
+		</script>
+	</body>
+</html>
