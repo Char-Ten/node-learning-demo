@@ -1,0 +1,220 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta charset="utf-8" />
+    <title></title>
+    <style>
+        #qrcode {
+            height: 300px;
+            width: 300px;
+        }
+        
+        #gyro {
+            position: relative;
+        }
+        
+        .gyro {
+            position: relative;
+            height: 200px;
+            width: 200px;
+            border-radius: 100px;
+            margin: 50px;
+            overflow: hidden;
+            background: #0af;
+        }
+        
+        .gyro__earth {
+            position: absolute;
+            top: 100px;
+            left: 0;
+            height: 198px;
+            border: 1px solid #fff;
+            border-right: 0;
+            border-left: 0;
+            border-radius: 0;
+            margin: 0;
+            background: #fa0;
+        }
+        
+        .gyro__out {
+            position: absolute;
+            top: -10px;
+            left: 40px;
+            height: 220px;
+            width: 220px;
+            border-radius: 110px;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.5) inset;
+        }
+        
+        .gyro__arrow {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 10px;
+            background: #af0;
+            text-align: center;
+            color: #fff;
+        }
+        
+        .gyro__target {
+            position: absolute;
+            top: 50%;
+            left: 100px;
+            transform: translate(-50%, -50%);
+            width: 100px;
+            height: 2px;
+            margin-left: 50px;
+            background: #fff;
+        }
+        
+        .gyro__arrow--target {
+            position: absolute;
+            top: 100%;
+            left: 50%;
+            transform: translate(-50%, -1px);
+            height: 0;
+            width: 0;
+            border: 10px solid transparent;
+            border-top-color: #fff
+        }
+        
+        #pitchScale {
+            position: absolute;
+            top: 0;
+            left: 50px;
+            border-radius: 100px;
+            overflow: hidden;
+        }
+    </style>
+</head>
+
+<body>
+    <div id="qrcode"></div>
+    <div id="gyro">
+        <div class="gyro" id="gyroBall">
+            <div id="gyroEarth" class="gyro gyro__earth"></div>
+        </div>
+        <canvas id="pitchScale" width=200 height=200></canvas>
+        <div class="gyro__target">
+            <div class="gyro__arrow--target"></div>
+        </div>
+        <div class="gyro__out" id="gyroYaw">
+            <div class="gyro__arrow">北</div>
+        </div>
+    </div>
+
+    <script src="http://cdn.bootcss.com/jquery/3.2.1/jquery.min.js"></script>
+    <script src="http://cdn.bootcss.com/jquery.qrcode/1.0/jquery.qrcode.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        var socket = io('http://' + location.hostname + ':3000');
+        $(function() {
+            $.ajax({
+                url: '/getIp',
+                method: 'get',
+                success: setQrcode
+            });
+            socket.on('m.html is con', function() {
+                $('#qrcode').html('connect!')
+            });
+
+            function setQrcode(res) {
+                $('#qrcode').qrcode(`http://${res}:3000/m.html`)
+            }
+        });
+
+        ;
+        (function() {
+            var gyroEarth = document.getElementById('gyroEarth');
+            var gyroBall = document.getElementById('gyroBall');
+            var gyroYaw = document.getElementById('gyroYaw');
+            var pitchScale = document.getElementById('pitchScale');
+            var pitchScaleCtx = pitchScale.getContext('2d');
+
+            var gyroEarthCSSTpl = 'transform:translateY(${translateY}px)';
+            var gyroBallCSSTpl = 'transform:rotate(${rotate}deg)';
+
+            initPitchScale();
+            socket.on('deviceMsg', function(o) {
+                renderGyroEarth(o.beta);
+                renderGyroBall(o.gamma);
+                renderGyroYaw(o.alpha);
+                renderPitchScale(o.beta);
+            });
+
+            function renderGyroEarth(pitch) {
+                if (typeof pitch !== 'number') {
+                    return
+                }
+                var translateY = 100 * Math.sin(_BackDeg(pitch));
+                if (pitch > 90 || pitch < -90) {
+                    translateY = -200 - translateY;
+                }
+                gyroEarth.setAttribute('style', gyroEarthCSSTpl.replace('${translateY}', translateY))
+
+            }
+
+            function renderGyroBall(roll) {
+                if (typeof roll !== 'number') {
+                    return
+                }
+                gyroBall.setAttribute('style', gyroBallCSSTpl.replace('${rotate}', -roll))
+            }
+
+            function renderGyroYaw(yaw) {
+                if (typeof yaw !== 'number') {
+                    return
+                }
+                gyroYaw.setAttribute('style', gyroBallCSSTpl.replace('${rotate}', yaw))
+            }
+
+            function _BackDeg(num) {
+                return num * Math.PI / 180;
+            }
+
+            function initPitchScale() {
+                var ctx = pitchScaleCtx;
+                ctx.lineWidth = 1;
+                ctx.textBaseline = 'middle';
+                ctx.strokeStyle = '#afa';
+            }
+
+            function renderPitchScale(pitch) {
+                var ctx = pitchScaleCtx;
+                var index = parseInt(pitch / 90);
+                var top = pitch + 90;
+                var bottom = pitch - 90;
+                var near = pitch - index * 90;
+
+                ctx.clearRect(0, 0, 400, 400)
+                ctx.beginPath();
+                for (var i = -180; i < 180; i += 15) {
+                    var bg = 70
+                    var width = 130
+                    if (i % 2) {
+                        bg = 80
+                        width = 120;
+                        ctx.strokeText(90 * index - i, 160, (i + near) * 90 / 100 + 100);
+                    }
+                    ctx.moveTo(bg, (i + near) * 90 / 100 + 100);
+                    ctx.lineTo(width, (i + near) * 90 / 100 + 100);
+                    ctx.closePath();
+                    width = null;
+                    bg = null;
+                }
+                ctx.strokeText(pitch.toFixed(2), 10, 100);
+                ctx.stroke();
+
+                index = null
+                top = null
+                bottom = null
+                near = null
+            }
+        })();
+    </script>
+</body>
+
+</html>

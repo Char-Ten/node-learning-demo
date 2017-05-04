@@ -1,0 +1,139 @@
+<!doctype html>
+<html>
+
+<head>
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <meta charset="utf-8" />
+    <title>23333</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        #gyro {
+            position: relative;
+        }
+        
+        .gyro {
+            position: relative;
+            height: 200px;
+            width: 200px;
+            border-radius: 100px;
+            margin: 50px;
+            overflow: hidden;
+            background: #0af;
+        }
+        
+        .gyro__earth {
+            position: absolute;
+            top: 100px;
+            left: 0;
+            height: 198px;
+            border: 1px solid #fff;
+            border-right: 0;
+            border-left: 0;
+            border-radius: 0;
+            margin: 0;
+            background: #fa0;
+            transform: translateY(20px)
+        }
+        
+        .gyro__out {
+            position: absolute;
+            top: -10px;
+            left: 40px;
+            height: 220px;
+            width: 220px;
+            border-radius: 110px;
+        }
+        
+        .gyro__arrow {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 10px;
+            background: #af0;
+            text-align: center;
+            color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <!--<div>
+        <span>水平a：</span>
+        <b id="alpha"></b>
+    </div>
+    <div>
+        <span>仰角b：</span>
+        <b id="beta"></b>
+    </div>
+    <div>
+        <span>横滚g：</span>
+        <b id="gamma"></b>
+    </div>-->
+    <div id="gyro">
+        <div class="gyro" id="gyroBall">
+            <div id="gyroEarth" class="gyro gyro__earth"></div>
+        </div>
+        <div class="gyro__out" id="gyroYaw">
+            <div class="gyro__arrow">北</div>
+        </div>
+    </div>
+    <p id="console"></p>
+    <script>
+        ;
+        (function() {
+            var socket = io.connect('http://' + location.hostname + ':3000');
+            socket.emit('con', 1);
+            var gyroEarth = document.getElementById('gyroEarth');
+            var gyroBall = document.getElementById('gyroBall');
+            var gyroYaw = document.getElementById('gyroYaw');
+
+            var gyroEarthCSSTpl = 'transform:translateY(${translateY}px)';
+            var gyroBallCSSTpl = 'transform:rotate(${rotate}deg)';
+
+            window.addEventListener('deviceorientation', function(o) {
+                renderGyroEarth(o.beta);
+                renderGyroBall(o.gamma);
+                renderGyroYaw(o.alpha);
+                socket.emit('deviceMsg', {
+                    alpha: o.alpha,
+                    beta: o.beta,
+                    gamma: o.gamma
+                })
+            });
+
+            function renderGyroEarth(pitch) {
+                if (typeof pitch !== 'number') {
+                    return
+                }
+                var translateY = 100 * Math.sin(_BackDeg(pitch));
+                if (pitch > 90 || pitch < -90) {
+                    translateY = -200 - translateY;
+                }
+                gyroEarth.setAttribute('style', gyroEarthCSSTpl.replace('${translateY}', translateY))
+
+            }
+
+            function renderGyroBall(roll) {
+                if (typeof roll !== 'number') {
+                    return
+                }
+                gyroBall.setAttribute('style', gyroBallCSSTpl.replace('${rotate}', -roll))
+            }
+
+            function renderGyroYaw(yaw) {
+                if (typeof yaw !== 'number') {
+                    return
+                }
+                gyroYaw.setAttribute('style', gyroBallCSSTpl.replace('${rotate}', yaw))
+            }
+
+            function _BackDeg(num) {
+                return num * Math.PI / 180;
+            }
+        })();
+    </script>
+</body>
+
+</html>
