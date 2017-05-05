@@ -1,156 +1,141 @@
 <!doctype html>
 <html>
-
-<head>
-    <meta charset="utf-8" />
-    <title>node测试</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            outline: none;
-            transition: all 0.5s;
-            -webkit-transition: all 0.5s;
-        }
-        
-        page {
-            width: 100%;
-        }
-        
-        header,
-        section {
-            padding: 5px;
-            border: 1px solid #aaa;
-            margin: 5px;
-        }
-        
-        header .u-text {
-            height: 100px;
-            width: 98%;
-            padding: 1%;
-            border: 1px solid #aaa;
-            border-radius: 5px;
-            outline: none;
-            resize: none;
-        }
-        
-        header .u-text:focus {
-            border-color: #0af;
-            box-shadow: 0 0 5px #08f;
-        }
-        
-        [value="提交"] {
-            padding: 2px 5px;
-            border: 1px solid transparent;
-            border-radius: 5px;
-            color: #fff;
-            background: #08f;
-            font-family: "微软雅黑";
-            cursor: pointer;
-        }
-        
-        [value="提交"]:hover {
-            box-shadow: 0 0 5px #08f;
-            background: #0af
-        }
-        
-        [value="提交"]:active {
-            box-shadow: 0 0 1px #08f;
-            background: #08f;
-        }
-        
-        dt {
-            padding: 5px;
-            border-bottom: 1px solid #aaa;
-        }
-        
-        dl dd ul li {
-            padding: 5px;
-            border-bottom: 1px dashed #aaa;
-            overflow: hidden;
-        }
-        
-        .u-status {
-            float: right;
-            font-size: 12px;
-            color: #aaa;
-        }
-    </style>
-</head>
-
-<body>
-    <div class="page">
-        <header>
-            <div>
-                <textarea class="u-text"></textarea>
-            </div>
-            <div>
-                <input type="button" value="提交" />
-            </div>
-        </header>
-        <section>
-            <dl>
-                <dt><h3>评论</h3></dt>
-                <dd>
-                    <ul class="m-com">
-                    </ul>
-                </dd>
-            </dl>
-        </section>
-    </div>
-    <script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
-    <script>
-        window.onload = function() {
-            /*获取当前评论数据*/
-            $.ajax({
-                type: 'get',
-                url: 'http://localhost:8080/comment',
-                async: true,
-                success: function(r) {
-                    r = JSON.parse(r);
-                    if (r.code == 1) {
-                        for (var i in r.data) {
-                            $('.m-com').append($domOfCom(r.data[i].value, r.data[i].status));
-                        }
-                    }
-                }
-            })
-
-            $('[value="提交"]').click(function() {
-                var date = new Date();
-                var time = date.getFullYear() + '年' + (date.getMonth() + 1) + '月' + date.getDate() + '日' + date.getHours() + ':' + date.getMinutes() + ':' + date.getSeconds();
-                var value = $('.u-text').val();
-                if (value) {
-                    $('.m-com').append($domOfCom(value, time));
-                    $.ajax({
-                        type: 'post',
-                        url: 'http://localhost:8080/postComment',
-                        data: {
-                            value: value,
-                            status: time
-                        },
-                        async: true,
-                        success: function(r) {
-                            r = JSON.parse(r);
-                            if (r.code == 1) {
-                                alert('评论成功');
-                            }
-                        }
-                    })
-                }
-                $('.u-text').val('');
-
-            });
-
-            function $domOfCom(com, time) {
-                var html = '<li>\
-						<div class="u-ct">' + com + '</div>\
-						<div class="u-status">' + time + '</div>\
+	<head>
+		<meta charset="utf-8"/>
+		<title>node测试</title>
+		<style>
+			*{
+				margin:0;
+				padding:0;
+				outline:none;
+				transition:all 0.5s;
+				-webkit-transition:all 0.5s;
+			}
+			page{width:100%;}
+			header,section{
+				padding:5px;
+				border:1px solid #aaa;
+				margin:5px;
+			}
+			header .u-text{
+				height:100px;
+				width:98%;
+				padding:1%;
+				border:1px solid #aaa;
+				border-radius:5px;
+				outline:none;
+				resize:none;
+			}
+			header .u-text:focus{
+				border-color:#0af;
+				box-shadow:0 0 5px #08f;
+			}
+			[value="提交"]{
+				padding:2px 5px;
+				border:1px solid transparent;
+				border-radius:5px;
+				color:#fff;
+				background:#08f;
+				font-family:"微软雅黑";
+				cursor:pointer;
+			}
+			[value="提交"]:hover{
+				box-shadow:0 0 5px #08f;
+				background:#0af
+				
+			}
+			[value="提交"]:active{
+				box-shadow:0 0 1px #08f;
+				background:#08f;
+			}
+			dt{	
+				padding:5px;
+				border-bottom:1px solid #aaa;
+			}
+			dl dd ul li{
+				padding:5px;
+				border-bottom:1px dashed #aaa;
+				overflow:hidden;
+			}
+			.u-status{
+				float:right;
+				font-size:12px;
+				color:#aaa;
+			}
+		</style>
+	</head>
+	<body>
+		<div class="page">
+			<header>
+				<div>
+					<textarea class="u-text"></textarea>
+				</div>
+				<div>
+					<input type="button" value="提交"/>
+				</div>
+			</header>
+			<section>
+				<dl>
+					<dt><h3>评论</h3></dt>
+					<dd>
+						<ul class="m-com">
+						</ul>
+					</dd>
+				</dl>
+			</section>
+		</div>
+		<script src="http://apps.bdimg.com/libs/jquery/2.1.4/jquery.min.js"></script>
+		<script>
+			window.onload=function(){
+				/*获取当前评论数据*/
+				$.ajax({
+					type:'get',
+					url:'http://110.65.101.166:8080/comment',
+					async:true,
+					success:function(r){
+						r=JSON.parse(r);
+						if(r.code==1){
+							for(var i in r.data){
+								$('.m-com').append($domOfCom(r.data[i].value,r.data[i].status));
+							}
+						}
+					}
+				})
+				
+				$('[value="提交"]').click(function(){
+					var date=new Date();
+					var time=date.getFullYear()+'年'+(date.getMonth()+1)+'月'+date.getDate()+'日'+date.getHours()+':'+date.getMinutes()+':'+date.getSeconds();
+					var value=$('.u-text').val();
+					if(value){
+						$('.m-com').append($domOfCom(value,time));
+						$.ajax({
+							type:'post',
+							url:'http://110.65.101.166:8080/postComment',
+							data:{
+								value:value,
+								status:time
+							},
+							async:true,
+							success:function(r){
+								r=JSON.parse(r);
+								if(r.code==1){
+									alert('评论成功');
+								}
+							}
+						})
+					}
+					$('.u-text').val('');
+					
+				});
+				
+				function $domOfCom(com,time){
+					var html='<li>\
+						<div class="u-ct">'+com+'</div>\
+						<div class="u-status">'+time+'</div>\
 					</li>';
-                return $(html);
-            }
-        }
-    </script>
-</body>
-
+					return $(html);
+				}
+			}
+		</script>
+	</body>
 </html>
