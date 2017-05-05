@@ -12,7 +12,7 @@
 2. 如果电脑和手机处于同一局域网下，且wifi是由电脑产生（诸如猎豹wifi），请手动查询电脑开启wifi的ip地址，并且进入`/app/index.js`里面，将代码改为：
 ```javascript
     app.get('/getIp', (req, res) => {
-        res.send(192.168.0.1)//你查询到的ip地址
+        res.send('192.168.0.1')//你查询到的ip地址
     })
 ```
 3. node服务端使用了部分es6写法，如果发现开启服务错误，可能是node版本过低语法不支持所致，请升级node版本
